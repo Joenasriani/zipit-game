@@ -19,6 +19,7 @@
             border-radius: 48px;
             padding: 10px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
         }
         .grid-container {
             display: grid;
@@ -36,6 +37,7 @@
             align-items: center;
             justify-content: center;
             position: relative;
+            transition: background-color 0.2s ease;
         }
         .node {
             width: 76%;
@@ -83,27 +85,56 @@
             font-weight: 900;
             color: rgb(31, 41, 55);
         }
+        /* Refined UX Popups */
         .win-overlay {
             position: fixed;
             inset: 0;
             display: none;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(4px);
             z-index: 100;
             opacity: 0;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.2s ease; /* Fast Fade In */
         }
         .win-overlay.active {
             opacity: 1;
         }
+        .win-overlay.closing {
+            opacity: 0;
+            transition: opacity 0.1s ease; /* Faster Fade Out */
+        }
         @keyframes modal-pop {
-            0% { transform: scale(0.9); opacity: 0; }
+            0% { transform: scale(0.95); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
         .modal-content {
-            animation: modal-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: modal-pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            white-space: nowrap; /* Keep popups 1 line */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 90vw;
+        }
+
+        /* Failure Feedback Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
+        }
+        .shake-error {
+            animation: shake 0.3s ease-in-out;
+            border-color: rgb(239, 68, 68) !important;
+        }
+        @keyframes flash-red {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(239, 68, 68, 0.1); }
+        }
+        .flash-empty {
+            animation: flash-red 0.4s ease-in-out 2;
         }
     </style>
 </head>
@@ -148,14 +179,16 @@
 
     <div id="winOverlay" class="win-overlay">
         <div class="modal-content bg-white rounded-[40px] p-12 text-center max-sm shadow-2xl border-4 border-orange-500">
-            <h2 id="winTitle" class="text-5xl font-black text-gray-900 mb-3 italic uppercase">ZIP IT!</h2>
-            <p id="winMsg" class="text-gray-600 font-black text-xl leading-snug"></p>
+            <h2 id="winTitle" class="text-5xl font-black text-gray-900 mb-2 italic uppercase">ZIP IT!</h2>
+            <p id="winMsg" class="text-gray-600 font-bold text-xl leading-snug"></p>
         </div>
     </div>
 
     <script>
+        // Verified Hamiltonian Levels (L1-30)
         const LEVELS = [
             { size: 6, nodes: { "0,0": 1, "0,5": 2, "5,5": 3, "5,0": 4 } },
+            { size: 6, nodes: { "5,1": 2, "0,2": 3, "0,0": 1, "5,3": 4 } },
             { size: 6, nodes: { "1,1": 1, "4,1": 2, "4,4": 3, "1,4": 4 } },
             { size: 6, nodes: { "0,0": 1, "0,2": 2, "2,2": 3, "2,1": 4 } },
             { size: 6, nodes: { "0,0": 1, "1,1": 2, "2,2": 3, "3,3": 4, "5,4": 5 } },
@@ -182,20 +215,19 @@
             { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16 } },
             { size: 6, nodes: { "0,0": 1, "0,1": 2, "1,1": 3, "1,0": 4, "2,0": 5, "2,1": 6, "3,1": 7, "3,0": 8, "4,0": 9, "4,1": 10, "5,1": 11, "5,0": 12, "5,2": 13, "4,2": 14, "3,2": 15, "2,2": 16, "1,2": 17 } },
             { size: 6, nodes: { "0,0": 1, "1,0": 2, "2,0": 3, "3,0": 4, "4,0": 5, "5,0": 6, "5,1": 7, "4,1": 8, "3,1": 9, "2,1": 10, "1,1": 11, "0,1": 12, "0,2": 13, "1,2": 14, "2,2": 15, "3,2": 16, "4,2": 17, "5,2": 18 } },
-            { size: 6, nodes: { "0,0": 1, "1,1": 2, "2,2": 3, "3,3": 4, "4,4": 5, "0,5": 6, "1,4": 7, "2,3": 8, "3,2": 9, "4,1": 10, "5,0": 11, "3,0": 12, "0,3": 13, "2,5": 14, "5,2": 15, "5,4": 20 } },
-            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16, "5,1": 17, "5,2": 18, "5,3": 19, "4,3": 20 } },
-            { size: 6, nodes: { "0,0": 1, "1,0": 2, "2,0": 3, "3,0": 4, "4,0": 5, "5,0": 6, "5,5": 7, "4,5": 8, "3,5": 9, "2,5": 10, "1,5": 11, "0,5": 12, "0,4": 13, "1,4": 14, "2,4": 15, "3,4": 16, "4,4": 17, "5,4": 18, "5,3": 19, "4,3": 20, "1,1": 21, "4,1": 22 } }
+            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16, "5,1": 17, "5,2": 18, "5,3": 19, "5,4": 20 } },
+            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16, "5,1": 17, "5,2": 18, "5,3": 19, "4,3": 20 } }
         ];
 
         const COMP_MESSAGES = [
-            "So… you know how to zip it.", "Okay, that worked.", // Level 1-2
-            "Okay, that was clean.", "You’re getting it.", "Not bad at all.", // Level 3-5
-            "That wasn’t accidental.", "You’re thinking ahead now.", "Most people mess this up.", "Feeling confident yet?", "That path had intent.", // Level 6-10
-            "Okay… that was smart.", "You saw the trap.", "Logic over luck. Good choice.", "You’re not guessing anymore.", "That filtered the amateurs.", // Level 11-15
-            "Feeling smarter than the average CEO?", "This is where people slip.", "You’re playing this correctly.", "Careful. You’re getting good.", "That move earns respect.", // Level 16-20
-            "Alright. That was elite.", "You’re thinking like the designer.", "This level breaks confidence.", "Joe Nasr is watching. Still calm?", "That was surgical.", // Level 21-25
-            "Very few get this far.", "That was not obvious.", "Your brain is fully engaged.", "You earned this progress.", // Level 26-29
-            "Okay… you beat Joe Nasr." // Level 30
+            "So… you know how to zip it.", "SO YOU THINK YOU ARE 50% THAN ANY OTHER CEO?", "Clean start.", "Nice.", "That counts.", // L1-L5
+            "Okay, that was clean.", "You’re getting it.", "Not bad at all.", "Nice. Don’t get comfortable.", "You’re warming up. Joe noticed.", // L6-L10
+            "That wasn’t accidental.", "You’re thinking ahead now.", "Most people mess this up.", "Feeling confident yet?", "That path had intent.", // L11-L15
+            "Okay… that was smart.", "You saw the trap.", "Logic over luck. Good choice.", "You’re not guessing anymore.", "That filtered the amateurs.", // L16-L20
+            "Feeling smarter than the average CEO?", "This is where people slip.", "You’re playing this correctly.", "Careful. You’re getting good.", "That move earns respect.", // L21-L25
+            "Alright. That was elite.", "You’re thinking like the designer.", "This level breaks confidence.", "Joe Nasr is watching. Still calm?", "That was surgical.", // L26-30
+            "Very few get this far.", "That was not obvious.", "Your brain is fully engaged.", "You earned this progress.", "No panic. Impressive.",
+            "You didn’t just zip it — you solved it."
         ];
 
         let levelIdx = 0;
@@ -213,13 +245,14 @@
         const winOverlay = document.getElementById('winOverlay');
         const winMsg = document.getElementById('winMsg');
         const winTitle = document.getElementById('winTitle');
+        const boardFrame = document.getElementById('boardFrame');
 
         function initLevel() {
             const currentLevel = LEVELS[levelIdx];
             path = [];
             win = false;
             winOverlay.style.display = 'none';
-            winOverlay.classList.remove('active');
+            winOverlay.classList.remove('active', 'closing');
             levelCounter.innerText = `Level ${levelIdx + 1} of 30`;
             const cells = grid.querySelectorAll('.cell');
             cells.forEach(c => c.remove());
@@ -376,27 +409,38 @@
             const currentLevel = LEVELS[levelIdx];
             const maxVal = Math.max(...Object.values(currentLevel.nodes));
             const endCellVal = currentLevel.nodes[`${lastPos.r},${lastPos.c}`];
-            const totalRequiredNodes = Object.keys(currentLevel.nodes).length;
-            const visitedNodesInPath = path.filter(p => currentLevel.nodes[`${p.r},${p.c}`]).length;
 
-            if (path.length === 36 && visitedNodesInPath === totalRequiredNodes && endCellVal === maxVal) {
+            // Shaking feedback for premature finish
+            if (endCellVal === maxVal && path.length < 36) {
+                boardFrame.classList.add('shake-error');
+                grid.querySelectorAll('.cell').forEach(cell => {
+                    const r = parseInt(cell.dataset.r), c = parseInt(cell.dataset.c);
+                    if (!path.some(p => p.r === r && p.c === c)) cell.classList.add('flash-empty');
+                });
+                setTimeout(() => {
+                    boardFrame.classList.remove('shake-error');
+                    grid.querySelectorAll('.flash-empty').forEach(el => el.classList.remove('flash-empty'));
+                }, 800);
+                return;
+            }
+
+            if (path.length === 36 && endCellVal === maxVal) {
                 win = true;
                 isDragging = false;
-                
                 winTitle.innerText = levelIdx === 0 ? "NICE!" : "ZIP IT!";
-                winMsg.innerText = COMP_MESSAGES[levelIdx] || "You zipped it!";
-                
+                winMsg.innerText = COMP_MESSAGES[levelIdx] || "You solved it!";
                 winOverlay.style.display = "flex";
-                requestAnimationFrame(() => {
-                    winOverlay.classList.add('active');
-                });
+                requestAnimationFrame(() => winOverlay.classList.add('active'));
 
                 setTimeout(() => {
-                    if (levelIdx < LEVELS.length - 1) {
-                        levelIdx++;
-                        initLevel();
-                    }
-                }, 3500);
+                    winOverlay.classList.add('closing');
+                    setTimeout(() => {
+                        if (levelIdx < LEVELS.length - 1) {
+                            levelIdx++;
+                            initLevel();
+                        }
+                    }, 150);
+                }, 2500);
             }
         }
 
