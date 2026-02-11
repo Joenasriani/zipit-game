@@ -176,7 +176,7 @@
         ];
 
         const COMP_MESSAGES = [
-            "So… you know how to zip it.", "You zipped it. Beginner’s luck counts.", "Okay, that was clean.", "Nice. Don’t get comfortable.", "You’re warming up. Joe noticed.",
+            "So… you know how to zip it.", "SO YOU THINK YOU ARE 50% THAN ANY OTHER CEO?", "Okay, that was clean.", "Nice. Don’t get comfortable.", "You’re warming up. Joe noticed.",
             "You zipped it. Again.", "Still think this is easy?", "That path wasn’t accidental.", "Impressive. Joe Nasr would approve.", "You’re thinking ahead now. Dangerous.", "Most people mess this one up.", "Keep going. Egos are fragile.",
             "Okay… that was smart.", "You’re not supposed to see that so fast.", "Careful. You’re catching up to Joe Nasr.", "That move filtered the amateurs.", "Logic > luck. You chose logic.", "You’re officially not bad at this.",
             "This is where people quit.", "You zipped it… but can you explain why?", "Most players fail right before this.", "You saw the trap. Respect.", "Joe Nasr made this one unfair on purpose.", "Your brain is officially engaged.", "Pure class. Almost there.",
@@ -368,7 +368,6 @@
                 win = true;
                 isDragging = false;
                 
-                // Toggle pop-up title: NICE! for level 1, ZIP IT! for others
                 winTitle.innerText = levelIdx === 0 ? "NICE!" : "ZIP IT!";
                 
                 winMsg.innerText = COMP_MESSAGES[levelIdx] || "You zipped it!";
