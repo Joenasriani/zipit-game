@@ -103,15 +103,17 @@
 <body class="p-6">
     <div class="max-w-[500px] mx-auto flex flex-col h-[95vh]">
         
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-10 w-full">
+        <div class="flex justify-between items-center mb-10 w-full px-2">
             <div class="flex items-center gap-4">
                 <button id="backBtn" class="p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-700"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
                 </button>
-                <div class="flex items-center gap-2 uppercase tracking-tighter">
-                    <span class="zip-box font-black">ZIP</span>
-                    <span class="it-text">IT!</span>
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2 uppercase tracking-tighter">
+                        <span class="zip-box font-black">ZIP</span>
+                        <span class="it-text">IT!</span>
+                    </div>
+                    <span class="text-[10px] text-gray-400 font-bold mt-1 ml-1 tracking-tight uppercase">Practice the LinkedIn Zip Game</span>
                 </div>
             </div>
             <button id="musicToggle" class="p-1 text-gray-700">
@@ -120,19 +122,16 @@
             </button>
         </div>
 
-        <!-- Controls (Top) -->
         <div class="flex justify-end mb-3 pr-2">
             <button id="clearBtn" class="text-gray-500 font-bold bg-gray-200/60 px-6 py-1.5 rounded-full text-sm border border-gray-300">Clear</button>
         </div>
 
-        <!-- Game Board -->
         <div id="boardFrame" class="grid-frame">
             <div id="grid" class="grid-container">
                 <canvas id="pathCanvas"></canvas>
             </div>
         </div>
 
-        <!-- Buttons -->
         <div class="grid grid-cols-2 gap-5 mt-10 px-4">
             <button id="undoBtn" class="bg-gray-200 text-gray-500 font-bold py-4 rounded-full text-lg active:bg-gray-300 transition-colors">Undo</button>
             <button id="hintBtn" class="bg-white border-2 border-gray-800 text-gray-800 font-bold py-4 rounded-full text-lg active:bg-gray-100 transition-colors">Hint</button>
@@ -140,17 +139,15 @@
 
         <div class="flex-grow"></div>
         
-        <!-- Level Counter -->
         <div id="levelCounter" class="text-center mb-10 font-black text-gray-400 text-sm uppercase tracking-widest">
             Level 1 of 30
         </div>
     </div>
 
-    <!-- Win Animation Overlay -->
     <div id="winOverlay" class="win-overlay">
         <div class="bg-white rounded-[40px] p-12 text-center max-w-sm shadow-2xl border-4 border-orange-500 animate-bounce">
             <h2 class="text-5xl font-black text-gray-900 mb-3 italic uppercase">ZIP IT!</h2>
-            <p class="text-gray-600 font-black text-xl">Level Complete!</p>
+            <p id="winMsg" class="text-gray-600 font-black text-xl leading-snug">Level Complete!</p>
         </div>
     </div>
 
@@ -188,6 +185,15 @@
             { size: 6, nodes: { "0,0": 1, "0,1": 2, "1,1": 3, "1,0": 4, "2,0": 5, "2,1": 6, "3,1": 7, "3,0": 8, "4,0": 9, "4,1": 10, "5,1": 11, "5,0": 12, "5,2": 13, "4,2": 14, "3,2": 15, "2,2": 16, "1,2": 17, "0,2": 18, "0,3": 19, "1,3": 20, "2,3": 21, "3,3": 22 } }
         ];
 
+        const COMP_MESSAGES = [
+            "So… you know how to zip it.", "You zipped it. Beginner’s luck counts.", "Okay, that was clean.", "Nice. Don’t get comfortable.", "You’re warming up. Joe noticed.",
+            "You zipped it. Again.", "Still think this is easy?", "That path wasn’t accidental.", "Impressive. Joe Nasr would approve.", "You’re thinking ahead now. Dangerous.", "Most people mess this one up.", "Keep going. Egos are fragile.",
+            "Okay… that was smart.", "You’re not supposed to see that so fast.", "Careful. You’re catching up to Joe Nasr.", "That move filtered the amateurs.", "Logic > luck. You chose logic.", "You’re officially not bad at this.",
+            "This is where people quit.", "You zipped it… but can you explain why?", "Most players fail right before this.", "You saw the trap. Respect.", "Joe Nasr made this one unfair on purpose.", "Your brain is officially engaged.", "Pure class. Almost there.",
+            "Alright. That was elite.", "You’re thinking like the designer now.", "This level breaks egos.", "Joe Nasr is watching. Still calm?",
+            "You didn’t just zip it — you solved it."
+        ];
+
         let levelIdx = 0;
         let path = [];
         let isDragging = false;
@@ -201,6 +207,7 @@
         const ctx = canvas.getContext('2d');
         const levelCounter = document.getElementById('levelCounter');
         const winOverlay = document.getElementById('winOverlay');
+        const winMsg = document.getElementById('winMsg');
 
         function initLevel() {
             const currentLevel = LEVELS[levelIdx];
@@ -209,7 +216,6 @@
             winOverlay.style.display = 'none';
             levelCounter.innerText = `Level ${levelIdx + 1} of 30`;
             
-            // Clean grid except canvas
             const cells = grid.querySelectorAll('.cell');
             cells.forEach(c => c.remove());
 
@@ -265,8 +271,6 @@
             });
             ctx.stroke();
 
-            // Highlight nodes in path
-            const currentLevel = LEVELS[levelIdx];
             const allNodes = grid.querySelectorAll('.node');
             allNodes.forEach(n => n.classList.remove('in-path'));
             path.forEach(p => {
@@ -288,7 +292,8 @@
 
         function handleDown(e) {
             if (win) return;
-            const pos = getCoords(e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY);
+            const pointer = e.touches ? e.touches[0] : e;
+            const pos = getCoords(pointer.clientX, pointer.clientY);
             if (!pos) return;
 
             const currentLevel = LEVELS[levelIdx];
@@ -311,7 +316,8 @@
 
         function handleMove(e) {
             if (!isDragging || win) return;
-            const pos = getCoords(e.clientX || (e.touches && e.touches[0].clientX), e.clientY || (e.touches && e.touches[0].clientY));
+            const pointer = e.touches ? e.touches[0] : e;
+            const pos = getCoords(pointer.clientX, pointer.clientY);
             if (!pos) return;
 
             const head = path[path.length - 1];
@@ -321,7 +327,6 @@
             const dc = Math.abs(pos.c - head.c);
 
             if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
-                // Backtrack
                 if (path.length > 1) {
                     const prev = path[path.length - 2];
                     if (prev.r === pos.r && prev.c === pos.c) {
@@ -331,10 +336,8 @@
                     }
                 }
 
-                // Prevent overlap
                 if (path.some(p => p.r === pos.r && p.c === pos.c)) return;
 
-                // Sequence Check
                 const currentLevel = LEVELS[levelIdx];
                 const nodeVal = currentLevel.nodes[`${pos.r},${pos.c}`];
                 if (nodeVal) {
@@ -373,13 +376,14 @@
             if (path.length === 36 && visitedNodesCount === totalRequiredNodes && endCellVal === maxVal) {
                 win = true;
                 isDragging = false;
+                winMsg.innerText = COMP_MESSAGES[levelIdx] || "You zipped it!";
                 winOverlay.style.display = 'flex';
                 setTimeout(() => {
                     if (levelIdx < LEVELS.length - 1) {
                         levelIdx++;
                         initLevel();
                     }
-                }, 1500);
+                }, 3500);
             }
         }
 
@@ -405,7 +409,7 @@
                 if (val) {
                     let lastNum = 0;
                     for (let i = curPath.length - 1; i >= 0; i--) {
-                        const v = nodes[`${curPath[i].r},${curPath[i].c}`];
+                        const v = currentLevel.nodes[`${curPath[i].r},${curPath[i].c}`];
                         if (v) { lastNum = v; break; }
                     }
                     if (val !== lastNum + 1) continue;
@@ -416,7 +420,6 @@
             return null;
         }
 
-        // Event Listeners
         grid.addEventListener('pointerdown', handleDown);
         window.addEventListener('pointermove', handleMove);
         window.addEventListener('pointerup', () => isDragging = false);
@@ -478,4 +481,3 @@
     </script>
 </body>
 </html>
-
