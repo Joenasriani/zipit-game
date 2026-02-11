@@ -51,9 +51,6 @@
             background-color: black;
             color: white;
         }
-        .node.in-path {
-            background-color: transparent;
-        }
         .node.error {
             background-color: rgb(239, 68, 68) !important;
             transform: scale(1.1);
@@ -145,7 +142,7 @@
     </div>
 
     <div id="winOverlay" class="win-overlay">
-        <div class="bg-white rounded-[40px] p-12 text-center max-w-sm shadow-2xl border-4 border-orange-500 animate-bounce">
+        <div class="bg-white rounded-[40px] p-12 text-center max-sm shadow-2xl border-4 border-orange-500 animate-bounce">
             <h2 class="text-5xl font-black text-gray-900 mb-3 italic uppercase">ZIP IT!</h2>
             <p id="winMsg" class="text-gray-600 font-black text-xl leading-snug">Level Complete!</p>
         </div>
@@ -270,13 +267,6 @@
                 else ctx.lineTo(x, y);
             });
             ctx.stroke();
-
-            const allNodes = grid.querySelectorAll('.node');
-            allNodes.forEach(n => n.classList.remove('in-path'));
-            path.forEach(p => {
-                const node = document.getElementById(`node-${p.r}-${p.c}`);
-                if (node) node.classList.add('in-path');
-            });
         }
 
         function getCoords(clientX, clientY) {
@@ -409,7 +399,7 @@
                 if (val) {
                     let lastNum = 0;
                     for (let i = curPath.length - 1; i >= 0; i--) {
-                        const v = currentLevel.nodes[`${curPath[i].r},${curPath[i].c}`];
+                        const v = nodes[`${curPath[i].r},${curPath[i].c}`];
                         if (v) { lastNum = v; break; }
                     }
                     if (val !== lastNum + 1) continue;
