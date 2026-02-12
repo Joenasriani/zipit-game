@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ZIP IT!</title>
     <script src="https://cdn.tailwindcss.com/"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
             background-color: rgb(248, 250, 255);
@@ -13,458 +17,302 @@
             user-select: none;
             overflow: hidden;
         }
-        .grid-frame {
-            background: white;
-            border: 4px solid rgb(209, 213, 219);
-            border-radius: 48px;
-            padding: 10px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            grid-template-rows: repeat(6, 1fr);
-            aspect-ratio: 1 / 1;
-            width: 100%;
-            border-radius: 40px;
-            overflow: hidden;
-            position: relative;
-        }
-        .cell {
-            border: 0.5px solid rgb(229, 231, 235);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            transition: background-color 0.2s ease;
-        }
-        .cell.pop {
-            transform: scale(1.1);
-            z-index: 30;
-        }
-        .node {
-            width: 76%;
-            height: 76%;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 1.25rem;
-            z-index: 20;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background-color: black;
-            color: white;
-        }
-        .node.in-path {
-            background-color: rgb(0, 65, 130);
-            transform: scale(1.05);
-        }
-        .node.error {
-            background-color: rgb(239, 68, 68) !important;
-            transform: scale(1.2);
-        }
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .zip-box {
-            background-color: rgb(0, 65, 130);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 8px;
-            font-size: 2.25rem;
-            line-height: 2.5rem;
-        }
-        .it-text {
-            font-size: 3rem;
-            line-height: 1;
-            font-weight: 900;
-            color: rgb(31, 41, 55);
-        }
-        .win-overlay {
-            position: fixed;
-            inset: 0;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(6px);
-            z-index: 100;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-        .win-overlay.active { opacity: 1; }
-        .win-overlay.closing { opacity: 0; transition: opacity 0.1s ease; }
-        
-        @keyframes modal-pop {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .modal-content {
-            animation: modal-pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            white-space: nowrap;
-            max-width: 95vw;
-        }
-
-        @keyframes float-up {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-40px); opacity: 0; }
-        }
-        .streak-msg {
-            position: absolute;
-            pointer-events: none;
-            color: rgb(230, 138, 62);
-            font-weight: 900;
-            font-style: italic;
-            z-index: 50;
-            animation: float-up 0.6s ease-out forwards;
-        }
-
-        .confetti {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #E68A3E;
-            border-radius: 2px;
-            z-index: 90;
-            pointer-events: none;
-        }
-
-        @keyframes boss-pulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(0, 65, 130, 0.2); }
-            50% { box-shadow: 0 0 40px rgba(0, 65, 130, 0.4); border-color: rgb(0, 65, 130); }
-        }
-        .level-30 { animation: boss-pulse 2s infinite; }
-
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-8px); }
-            40%, 80% { transform: translateX(8px); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
-        .shake-error { animation: shake 0.3s ease-in-out; border-color: rgb(239, 68, 68) !important; }
-        @keyframes flash-red { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(239, 68, 68, 0.15); } }
-        .flash-empty { animation: flash-red 0.4s ease-in-out 2; }
+        @keyframes zipPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .shake-board { animation: shake 0.2s ease-in-out 3; border-color: rgb(239, 68, 68) !important; }
+        .flash-red { background-color: rgba(239, 68, 68, 0.1) !important; }
+        .animate-zip-pop { animation: zipPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     </style>
 </head>
-<body class="p-6">
-    <div id="gameContainer" class="max-w-[500px] mx-auto flex flex-col h-[95vh]">
-        <div class="flex justify-between items-center mb-10 w-full px-2">
-            <div class="flex items-center gap-4">
-                <button id="backBtn" class="p-1 active:scale-90 transition-transform">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-700"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-                </button>
-                <div class="flex flex-col text-left">
-                    <div class="flex items-center gap-2 uppercase tracking-tighter">
-                        <span class="zip-box font-black">ZIP</span>
-                        <span class="it-text">IT!</span>
-                    </div>
-                    <span class="text-[10px] text-gray-400 font-bold mt-1 ml-1 tracking-tight uppercase">LINKEDIN GAME PRACTICE</span>
-                </div>
-            </div>
-            <button id="musicToggle" class="p-1 text-gray-700 active:scale-90 transition-transform">
-                <svg id="musicOnIcon" style="display:none" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                <svg id="musicOffIcon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>
-            </button>
-        </div>
+<body>
+    <div id="root"></div>
 
-        <div class="flex justify-end mb-3 pr-2">
-            <button id="clearBtn" class="text-gray-500 font-bold bg-gray-200/60 px-6 py-1.5 rounded-full text-sm border border-gray-300 hover:bg-gray-200">Clear</button>
-        </div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-        <div id="boardFrame" class="grid-frame">
-            <div id="grid" class="grid-container">
-                <canvas id="pathCanvas"></canvas>
-            </div>
-        </div>
-
-        <div class="mt-10 px-4">
-            <button id="undoBtn" class="w-full bg-gray-200 text-gray-500 font-bold py-4 rounded-full text-lg active:bg-gray-300 transition-colors shadow-sm">Undo</button>
-        </div>
-
-        <div class="flex-grow"></div>
-        <div id="levelCounter" class="text-center mb-10 font-black text-gray-400 text-xs uppercase tracking-widest">Level 1 of 30</div>
-    </div>
-
-    <div id="winOverlay" class="win-overlay">
-        <div class="modal-content bg-white rounded-[40px] p-10 text-center shadow-2xl border-4 border-orange-500">
-            <h2 id="winTitle" class="text-4xl font-black text-gray-900 mb-2 italic uppercase">ZIP IT!</h2>
-            <p id="winMsg" class="text-gray-600 font-bold text-lg"></p>
-        </div>
-    </div>
-
-    <script>
         const LEVELS = [
-            { size: 6, nodes: { "0,0": 1, "0,5": 2, "5,5": 3, "5,0": 4 } },
-            { size: 6, nodes: { "0,0": 1, "2,1": 2, "4,2": 3, "5,4": 4 } },
-            { size: 6, nodes: { "1,1": 1, "4,1": 2, "4,4": 3, "1,4": 4 } },
-            { size: 6, nodes: { "0,0": 1, "0,2": 2, "2,2": 3, "2,1": 4 } },
+            { size: 6, nodes: { "0,0": 1, "0,5": 2, "5,5": 3, "5,4": 4 } },
+            { size: 6, nodes: { "0,0": 1, "2,1": 2, "4,2": 3, "5,4": 4, "4,5": 5 } }, 
+            { size: 6, nodes: { "1,1": 1, "4,1": 2, "4,4": 3, "1,4": 4, "0,5": 5 } },
+            { size: 6, nodes: { "0,0": 1, "0,2": 2, "2,2": 3, "2,1": 4, "5,4": 5 } },
             { size: 6, nodes: { "0,0": 1, "1,1": 2, "2,2": 3, "3,3": 4, "5,4": 5 } },
-            { size: 6, nodes: { "0,0": 1, "5,5": 2, "0,1": 3, "5,4": 4 } },
-            { size: 6, nodes: { "0,0": 1, "1,1": 2, "2,2": 3, "3,3": 4, "4,4": 5, "5,4": 6 } },
-            { size: 6, nodes: { "0,0": 1, "5,5": 2, "0,5": 3, "5,0": 4, "2,2": 5, "3,2": 6 } },
-            { size: 6, nodes: { "0,0": 1, "0,5": 4, "5,5": 3, "5,0": 2, "2,2": 5, "2,3": 6 } },
-            { size: 6, nodes: { "1,1": 1, "2,2": 2, "3,3": 3, "4,4": 4, "1,4": 5, "4,1": 6, "0,1": 7 } },
-            { size: 6, nodes: { "0,0": 3, "0,5": 4, "1,1": 1, "1,4": 7, "2,2": 2, "2,3": 8, "3,2": 11, "3,3": 9, "4,1": 12, "4,4": 6, "5,0": 10, "5,1": 5 } },
-            { size: 6, nodes: { "0,0": 1, "0,1": 2, "0,2": 3, "0,3": 4, "0,4": 5, "0,5": 6, "5,5": 7, "5,4": 8 } },
-            { size: 6, nodes: { "1,1": 1, "1,2": 2, "2,2": 3, "2,1": 4, "3,1": 5, "3,2": 6, "4,2": 7, "4,1": 8, "5,0": 9 } },
-            { size: 6, nodes: { "0,0": 1, "5,0": 2, "5,5": 3, "0,5": 4, "3,3": 5, "2,2": 6, "1,1": 7, "4,3": 8 } },
-            { size: 6, nodes: { "0,0": 1, "3,0": 2, "3,3": 3, "0,3": 4, "0,5": 5, "5,5": 6, "5,0": 7, "2,2": 8, "4,5": 9 } },
-            { size: 6, nodes: { "1,1": 1, "1,4": 2, "4,4": 3, "4,1": 4, "2,2": 5, "2,3": 6, "3,3": 7, "3,2": 8, "0,0": 9, "5,4": 10 } },
-            { size: 6, nodes: { "0,0": 1, "0,5": 2, "1,5": 3, "1,0": 4, "2,0": 5, "2,5": 6, "3,5": 7, "3,0": 8, "4,0": 9, "4,5": 10 } },
-            { size: 6, nodes: { "0,0": 1, "1,1": 3, "0,1": 2, "1,0": 4, "2,0": 5, "2,1": 6, "3,1": 7, "3,0": 8, "5,0": 9, "5,5": 10, "0,3": 11 } },
-            { size: 6, nodes: { "0,0": 1, "2,0": 2, "2,2": 3, "0,2": 4, "0,4": 5, "2,4": 6, "4,4": 7, "4,2": 8, "4,0": 9, "5,5": 10, "3,2": 11 } },
-            { size: 6, nodes: { "1,1": 1, "1,3": 2, "3,3": 3, "3,1": 4, "5,1": 5, "5,3": 6, "5,5": 7, "0,0": 8, "0,5": 9, "2,5": 10, "4,5": 11, "4,1": 12 } },
-            { size: 6, nodes: { "0,0": 1, "0,1": 2, "1,1": 3, "1,0": 4, "2,0": 5, "2,1": 6, "3,1": 7, "3,0": 8, "4,0": 9, "4,1": 10, "5,1": 11, "5,0": 12, "5,3": 13 } },
-            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "1,3": 7, "0,3": 8, "0,4": 9, "1,4": 10, "1,5": 11, "0,5": 12, "5,5": 13, "5,4": 14 } },
-            { size: 6, nodes: { "3,3": 1, "2,2": 2, "1,1": 3, "0,0": 4, "0,5": 5, "5,5": 6, "5,0": 7, "4,1": 8, "3,2": 9, "2,3": 10, "1,4": 11, "2,5": 12, "4,3": 13 } },
-            { size: 6, nodes: { "0,0": 1, "2,0": 2, "4,0": 3, "5,1": 4, "5,3": 5, "5,5": 6, "3,5": 7, "1,5": 8, "0,4": 9, "0,2": 10, "2,2": 11, "2,4": 12, "3,3": 13, "4,3": 14 } },
-            { size: 6, nodes: { "0,0": 1, "0,2": 2, "0,4": 3, "2,4": 4, "4,4": 5, "4,2": 6, "4,0": 7, "2,0": 8, "2,2": 9, "1,1": 10, "1,3": 11, "3,3": 12, "3,1": 13, "5,5": 14, "5,0": 15 } },
-            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16 } },
-            { size: 6, nodes: { "0,0": 1, "0,1": 2, "1,1": 3, "1,0": 4, "2,0": 5, "2,1": 6, "3,1": 7, "3,0": 8, "4,0": 9, "4,1": 10, "5,1": 11, "5,0": 12, "5,2": 13, "4,2": 14, "3,2": 15, "2,2": 16, "1,2": 17 } },
-            { size: 6, nodes: { "0,0": 1, "1,0": 2, "2,0": 3, "3,0": 4, "4,0": 5, "5,0": 6, "5,1": 7, "4,1": 8, "3,1": 9, "2,1": 10, "1,1": 11, "0,1": 12, "0,2": 13, "1,2": 14, "2,2": 15, "3,2": 16, "4,2": 17, "5,2": 18 } },
-            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16, "5,1": 17, "5,2": 18, "5,3": 19, "5,4": 20 } },
-            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16, "5,1": 17, "5,2": 18, "5,3": 19, "4,3": 20 } }
+            { size: 6, nodes: { "0,0": 1, "5,5": 2, "0,1": 3, "5,2": 4 } },
+            { size: 6, nodes: { "0,0": 1, "1,1": 2, "2,2": 3, "3,3": 4, "4,4": 5, "5,5": 6, "5,4": 7 } },
+            { size: 6, nodes: { "0,0": 1, "5,5": 2, "0,5": 3, "5,0": 4, "2,2": 5, "3,2": 6, "5,2": 7 } },
+            { size: 6, nodes: { "0,0": 1, "0,5": 4, "5,5": 3, "5,0": 2, "2,2": 5, "2,3": 6, "1,4": 7 } },
+            { size: 6, nodes: { "1,1": 1, "2,2": 2, "3,3": 3, "4,4": 4, "1,4": 5, "4,1": 6, "0,1": 7, "5,4": 8 } },
+            { size: 6, nodes: { "1,1": 1, "1,4": 7, "2,2": 2, "2,3": 8, "3,2": 11, "3,3": 9, "4,1": 12, "4,4": 6, "5,0": 10, "5,1": 5, "0,5": 13 } },
+            { size: 6, nodes: { "0,0": 1, "0,1": 2, "0,2": 3, "0,3": 4, "0,4": 5, "0,5": 6, "5,5": 7, "5,4": 8, "4,5": 9 } },
+            { size: 6, nodes: { "1,1": 1, "1,2": 2, "2,2": 3, "2,1": 4, "3,1": 5, "3,2": 6, "4,2": 7, "4,1": 8, "5,0": 9, "5,2": 10 } },
+            { size: 6, nodes: { "0,0": 1, "5,0": 2, "5,5": 3, "0,5": 4, "3,3": 5, "2,2": 6, "1,1": 7, "4,3": 8, "5,4": 9 } },
+            { size: 6, nodes: { "0,0": 1, "3,0": 2, "3,3": 3, "0,3": 4, "0,5": 5, "5,5": 6, "5,0": 7, "2,2": 8, "4,5": 9, "5,4": 10 } },
+            { size: 6, nodes: { "1,1": 1, "1,4": 2, "4,4": 3, "4,1": 4, "2,2": 5, "2,3": 6, "3,3": 7, "3,2": 8, "0,0": 9, "5,4": 10, "0,5": 11 } },
+            { size: 6, nodes: { "0,0": 1, "0,5": 2, "1,5": 3, "1,0": 4, "2,0": 5, "2,5": 6, "3,5": 7, "3,0": 8, "4,0": 9, "4,5": 10, "5,4": 11 } },
+            { size: 6, nodes: { "0,0": 1, "1,1": 3, "0,1": 2, "1,0": 4, "2,0": 5, "2,1": 6, "3,1": 7, "3,0": 8, "5,0": 9, "5,5": 10, "0,3": 11, "5,4": 12 } },
+            { size: 6, nodes: { "0,0": 1, "2,0": 2, "2,2": 3, "0,2": 4, "0,4": 5, "2,4": 6, "4,4": 7, "4,2": 8, "4,0": 9, "5,5": 10, "3,2": 11, "5,4": 12 } },
+            { size: 6, nodes: { "1,1": 1, "1,3": 2, "3,3": 3, "3,1": 4, "5,1": 5, "5,3": 6, "5,5": 7, "0,0": 8, "0,5": 9, "2,5": 10, "4,5": 11, "4,1": 12, "0,3": 13 } },
+            { size: 6, nodes: { "0,0": 1, "0,1": 2, "1,1": 3, "1,0": 4, "2,0": 5, "2,1": 6, "3,1": 7, "3,0": 8, "4,0": 9, "4,1": 10, "5,1": 11, "5,0": 12, "5,3": 13, "0,5": 14 } },
+            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "1,3": 7, "0,3": 8, "0,4": 9, "1,4": 10, "1,5": 11, "0,5": 12, "5,5": 13, "5,4": 14, "4,5": 15 } },
+            { size: 6, nodes: { "3,3": 1, "2,2": 2, "1,1": 3, "0,0": 4, "0,5": 5, "5,5": 6, "5,0": 7, "4,1": 8, "3,2": 9, "2,3": 10, "1,4": 11, "2,5": 12, "4,3": 13, "5,4": 14 } },
+            { size: 6, nodes: { "0,0": 1, "2,0": 2, "4,0": 3, "5,1": 4, "5,3": 5, "5,5": 6, "3,5": 7, "1,5": 8, "0,4": 9, "0,2": 10, "2,2": 11, "2,4": 12, "3,3": 13, "4,3": 14, "5,4": 15 } },
+            { size: 6, nodes: { "0,0": 1, "0,2": 2, "0,4": 3, "2,4": 4, "4,4": 5, "4,2": 6, "4,0": 7, "2,0": 8, "2,2": 9, "1,1": 10, "1,3": 11, "3,3": 12, "3,1": 13, "5,5": 14, "5,0": 15, "5,2": 16 } }, 
+            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16, "5,4": 17 } }, 
+            { size: 6, nodes: { "0,0": 1, "0,1": 2, "1,1": 3, "1,0": 4, "2,0": 5, "2,1": 6, "3,1": 7, "3,0": 8, "4,0": 9, "4,1": 10, "5,1": 11, "5,0": 12, "5,2": 13, "4,2": 14, "3,2": 15, "2,2": 16, "1,2": 17, "0,5": 18 } },
+            { size: 6, nodes: { "0,0": 1, "1,0": 2, "2,0": 3, "3,0": 4, "4,0": 5, "5,0": 6, "5,1": 7, "4,1": 8, "3,1": 9, "2,1": 10, "1,1": 11, "0,1": 12, "0,2": 13, "1,2": 14, "2,2": 15, "3,2": 16, "4,2": 17, "5,2": 18, "5,4": 19 } }, 
+            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16, "5,1": 17, "5,2": 18, "5,3": 19, "5,4": 20, "0,5": 21 } },
+            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16, "5,1": 17, "5,2": 18, "5,3": 19, "4,3": 20, "5,4": 21 } }
         ];
 
         const COMP_MESSAGES = [
-            "So… you know how to zip it!", "Ok! What about this one...", 
-            "Clean start buddy.", "Ok Nice!", "That counts.", 
+            "So… you know how to zip it.", "SO YOU THINK YOU ARE 50% BETTER THAN ANY OTHER CEO?", 
+            "Clean start.", "Nice.", "That counts.", 
             "Okay, that was clean.", "You’re getting it.", "Not bad at all.", "Nice. Don’t get comfortable.", "You’re warming up. Joe noticed.",
             "That wasn’t accidental.", "You’re thinking ahead now.", "Most people mess this up.", "Feeling confident yet?", "That path had intent.",
             "Okay… that was smart.", "You saw the trap.", "Logic over luck. Good choice.", "You’re not guessing anymore.", "That filtered the amateurs.",
             "Feeling smarter than the average CEO?", "This is where people slip.", "You’re playing this correctly.", "Careful. You’re getting good.", "That move earns respect.",
-            "Alright. That was elite.", "You’re thinking like the designer.", "This level breaks confidence.", "Joe Nasr is watching. Still calm?", 
+            "Alright. That was elite.", "You’re thinking like the designer.", "This level breaks confidence.", 
             "You didn’t just zip it — you solved it."
         ];
 
-        let levelIdx = 0;
-        let path = [];
-        let isDragging = false;
-        let win = false;
-        let isMusicOn = false;
-        let lastMoveTime = 0;
-        const audio = new Audio('/music/zipit.mp3');
-        audio.loop = true;
+        function App() {
+            const [levelIdx, setLevelIdx] = useState(0);
+            const [path, setPath] = useState([]);
+            const [isDragging, setIsDragging] = useState(false);
+            const [win, setWin] = useState(false);
+            const [errorCell, setErrorCell] = useState(null);
+            const [isMusicOn, setIsMusicOn] = useState(false);
+            const [shake, setShake] = useState(false);
+            const canvasRef = useRef(null);
+            const gridRef = useRef(null);
+            const audioRef = useRef(null);
 
-        const grid = document.getElementById('grid');
-        const canvas = document.getElementById('pathCanvas');
-        const ctx = canvas.getContext('2d');
-        const levelCounter = document.getElementById('levelCounter');
-        const winOverlay = document.getElementById('winOverlay');
-        const winMsg = document.getElementById('winMsg');
-        const winTitle = document.getElementById('winTitle');
-        const boardFrame = document.getElementById('boardFrame');
-
-        function createConfetti() {
-            const colors = ['#004182', '#E68A3E', '#22C55E', '#EF4444'];
-            for (let i = 0; i < 40; i++) {
-                const conf = document.createElement('div');
-                conf.className = 'confetti';
-                conf.style.left = Math.random() * 100 + 'vw';
-                conf.style.top = '-10px';
-                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                conf.style.transform = `rotate(${Math.random() * 360}deg)`;
-                document.body.appendChild(conf);
-
-                const speed = 2 + Math.random() * 3;
-                const horizontal = (Math.random() - 0.5) * 5;
-                let top = -10;
-                let currentLeft = parseFloat(conf.style.left);
-
-                const anim = setInterval(() => {
-                    top += speed;
-                    currentLeft += horizontal;
-                    conf.style.top = top + 'px';
-                    conf.style.left = currentLeft + 'vw';
-                    if (top > window.innerHeight) { clearInterval(anim); conf.remove(); }
-                }, 16);
-            }
-        }
-
-        function triggerStreak(x, y) {
-            const words = ["FAST!", "ZIPPY!", "FLOW!", "SHARP!"];
-            const txt = document.createElement('div');
-            txt.className = 'streak-msg';
-            txt.innerText = words[Math.floor(Math.random() * words.length)];
-            txt.style.left = x + 'px';
-            txt.style.top = y + 'px';
-            document.body.appendChild(txt);
-            setTimeout(() => txt.remove(), 600);
-        }
-
-        function initLevel() {
-            const currentLevel = LEVELS[levelIdx];
-            path = []; win = false;
-            winOverlay.style.display = 'none';
-            winOverlay.classList.remove('active', 'closing');
-            levelCounter.innerText = `Level ${levelIdx + 1} of 30`;
-            boardFrame.classList.toggle('level-30', levelIdx === 29);
-            const cells = grid.querySelectorAll('.cell');
-            cells.forEach(c => c.remove());
-            for (let r = 0; r < 6; r++) {
-                for (let c = 0; c < 6; c++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.dataset.r = r; cell.dataset.c = c;
-                    const val = currentLevel.nodes[`${r},${c}`];
-                    if (val) {
-                        const node = document.createElement('div');
-                        node.className = 'node';
-                        node.innerText = val;
-                        node.id = `node-${r}-${c}`;
-                        cell.appendChild(node);
-                    }
-                    grid.appendChild(cell);
-                }
-            }
-            resizeCanvas();
-        }
-
-        function resizeCanvas() {
-            const rect = grid.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            ctx.scale(dpr, dpr);
-            drawPath();
-        }
-
-        function drawPath() {
-            const rect = grid.getBoundingClientRect();
-            ctx.clearRect(0, 0, rect.width, rect.height);
-            if (path.length < 1) return;
             const currentLevel = LEVELS[levelIdx];
             const maxVal = Math.max(...Object.values(currentLevel.nodes));
-            let maxReached = -1;
-            for(let j=0; j < path.length; j++) if(currentLevel.nodes[`${path[j].r},${path[j].c}`] === maxVal) { maxReached = j; break; }
-            const cellSize = rect.width / 6;
-            const half = cellSize / 2;
-            ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = cellSize * 0.75;
-            for (let i = 1; i < path.length; i++) {
-                const p1 = path[i-1], p2 = path[i];
+
+            useEffect(() => {
+                if (!audioRef.current) {
+                    audioRef.current = new Audio('https://robomarket.ae/music/zipit.mp3');
+                    audioRef.current.loop = true;
+                }
+                if (isMusicOn) audioRef.current.play().catch(() => {});
+                else audioRef.current.pause();
+            }, [isMusicOn]);
+
+            const drawPath = () => {
+                const canvas = canvasRef.current;
+                if (!canvas || !gridRef.current) return;
+                const ctx = canvas.getContext('2d');
+                const rect = gridRef.current.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                ctx.clearRect(0, 0, rect.width, rect.height);
+
+                if (path.length < 1) return;
+                const cellSize = rect.width / currentLevel.size;
+                const half = cellSize / 2;
+
                 ctx.beginPath();
-                ctx.strokeStyle = (maxReached !== -1 && i > maxReached) ? 'rgb(209, 213, 219)' : 'rgb(230, 138, 62)';
-                ctx.moveTo(p1.c * cellSize + half, p1.r * cellSize + half);
-                ctx.lineTo(p2.c * cellSize + half, p2.r * cellSize + half);
-                ctx.stroke();
-            }
-            const head = path[path.length - 1];
-            ctx.beginPath(); ctx.fillStyle = 'white'; ctx.arc(head.c * cellSize + half, head.r * cellSize + half, cellSize * 0.15, 0, Math.PI * 2); ctx.fill();
-            const allNodes = grid.querySelectorAll('.node');
-            allNodes.forEach(n => n.classList.remove('in-path'));
-            path.forEach(p => {
-                const node = document.getElementById(`node-${p.r}-${p.c}`);
-                if (node) node.classList.add('in-path');
-            });
-        }
+                ctx.strokeStyle = 'rgb(230, 138, 62)'; 
+                ctx.lineWidth = cellSize * 0.75; 
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
 
-        function getCoords(clientX, clientY) {
-            const rect = grid.getBoundingClientRect();
-            const x = clientX - rect.left, y = clientY - rect.top;
-            if (x < 0 || x > rect.width || y < 0 || y > rect.height) return null;
-            return { r: Math.floor((y / rect.height) * 6), c: Math.floor((x / rect.width) * 6) };
-        }
-
-        function handleDown(e) {
-            if (win) return;
-            const ptr = e.touches ? e.touches[0] : e;
-            const pos = getCoords(ptr.clientX, ptr.clientY);
-            if (!pos) return;
-            const val = LEVELS[levelIdx].nodes[`${pos.r},${pos.c}`];
-            if (path.length === 0) { if (val === 1) { path = [pos]; isDragging = true; }
-            } else {
-                const idx = path.findIndex(p => p.r === pos.r && p.c === pos.c);
-                if (idx !== -1) { path = path.slice(0, idx + 1); isDragging = true; }
-            }
-            drawPath();
-        }
-
-        function handleMove(e) {
-            if (!isDragging || win) return;
-            const ptr = e.touches ? e.touches[0] : e;
-            const pos = getCoords(ptr.clientX, ptr.clientY);
-            if (!pos) return;
-            const head = path[path.length - 1];
-            if (head.r === pos.r && head.c === pos.c) return;
-            if (Math.abs(pos.r - head.r) + Math.abs(pos.c - head.c) === 1) {
-                if (path.length > 1 && path[path.length-2].r === pos.r && path[path.length-2].c === pos.c) {
-                    path.pop(); drawPath(); return;
-                }
-                if (path.some(p => p.r === pos.r && p.c === pos.c)) return;
-                const nodeVal = LEVELS[levelIdx].nodes[`${pos.r},${pos.c}`];
-                if (nodeVal) {
-                    let last = 0;
-                    for (let i = path.length - 1; i >= 0; i--) {
-                        const v = LEVELS[levelIdx].nodes[`${path[i].r},${path[i].c}`];
-                        if (v) { last = v; break; }
-                    }
-                    if (nodeVal !== last + 1) {
-                        const n = document.getElementById(`node-${pos.r}-${pos.c}`);
-                        if (n) { n.classList.add('error'); setTimeout(() => n.classList.remove('error'), 250); }
-                        return;
-                    }
-                }
-                const now = Date.now();
-                if (now - lastMoveTime < 150) triggerStreak(ptr.clientX, ptr.clientY);
-                lastMoveTime = now;
-                const cell = grid.querySelector(`[data-r="${pos.r}"][data-c="${pos.c}"]`);
-                cell.classList.add('pop'); setTimeout(() => cell.classList.remove('pop'), 200);
-                path.push(pos); drawPath(); checkWinCondition(pos);
-            }
-        }
-
-        function checkWinCondition(lastPos) {
-            const currentLevel = LEVELS[levelIdx];
-            const maxVal = Math.max(...Object.values(currentLevel.nodes));
-            const endCellVal = currentLevel.nodes[`${lastPos.r},${lastPos.c}`];
-
-            if (endCellVal === maxVal && path.length < 36) {
-                boardFrame.classList.add('shake-error');
-                grid.querySelectorAll('.cell').forEach(cell => {
-                    const r = parseInt(cell.dataset.r), c = parseInt(cell.dataset.c);
-                    if (!path.some(p => p.r === r && p.c === c)) cell.classList.add('flash-empty');
+                path.forEach((pos, i) => {
+                    const x = pos.c * cellSize + half;
+                    const y = pos.r * cellSize + half;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
                 });
-                setTimeout(() => {
-                    boardFrame.classList.remove('shake-error');
-                    grid.querySelectorAll('.flash-empty').forEach(el => el.classList.remove('flash-empty'));
-                }, 800);
-                return;
-            }
-            if (path.length === 36 && endCellVal === maxVal) {
-                win = true; isDragging = false;
-                winTitle.innerText = levelIdx === 0 ? "NICE!" : "ZIP IT!";
-                winMsg.innerText = COMP_MESSAGES[levelIdx];
-                winOverlay.style.display = "flex";
-                createConfetti();
-                requestAnimationFrame(() => winOverlay.classList.add('active'));
-                setTimeout(() => {
-                    winOverlay.classList.add('closing');
-                    setTimeout(() => { if (levelIdx < LEVELS.length - 1) { levelIdx++; initLevel(); } }, 150);
-                }, 2200);
-            }
+                ctx.stroke();
+            };
+
+            useEffect(() => {
+                drawPath();
+                window.addEventListener('resize', drawPath);
+                return () => window.removeEventListener('resize', drawPath);
+            }, [path, levelIdx]);
+
+            const getCoords = (clientX, clientY) => {
+                if (!gridRef.current) return null;
+                const rect = gridRef.current.getBoundingClientRect();
+                const x = clientX - rect.left;
+                const y = clientY - rect.top;
+                if (x < 0 || x > rect.width || y < 0 || y > rect.height) return null;
+                const c = Math.floor((x / rect.width) * currentLevel.size);
+                const r = Math.floor((y / rect.height) * currentLevel.size);
+                return { r, c };
+            };
+
+            const handlePointerDown = (e) => {
+                if (win) return;
+                const coords = getCoords(e.clientX, e.clientY);
+                if (!coords) return;
+                const key = `${coords.r},${coords.c}`;
+                if (path.length === 0) {
+                    if (currentLevel.nodes[key] === 1) {
+                        setPath([coords]);
+                        setIsDragging(true);
+                    }
+                } else {
+                    const idx = path.findIndex(p => p.r === coords.r && p.c === coords.c);
+                    if (idx !== -1) {
+                        setPath(path.slice(0, idx + 1));
+                        setIsDragging(true);
+                    }
+                }
+            };
+
+            const handlePointerMove = (e) => {
+                if (!isDragging || win) return;
+                const coords = getCoords(e.clientX, e.clientY);
+                if (!coords) return;
+                const head = path[path.length -  head.r === coords.r && head.c === coords.c) return;
+                
+                const headNode = path[path.length - 1];
+                if (Math.abs(coords.r - headNode.r) + Math.abs(coords.c - headNode.c) === 1) {
+                    if (path.length > 1) {
+                        const prev = path[path.length - 2];
+                        if (prev.r === coords.r && prev.c === coords.c) {
+                            setPath(path.slice(0, -1));
+                            return;
+                        }
+                    }
+                    if (path.some(p => p.r === coords.r && p.c === coords.c)) return;
+                    
+                    const nodeVal = currentLevel.nodes[`${coords.r},${coords.c}`];
+                    if (nodeVal) {
+                        let last = 0;
+                        for (let i = path.length - 1; i >= 0; i--) {
+                            const v = currentLevel.nodes[`${path[i].r},${path[i].c}`];
+                            if (v) { last = v; break; }
+                        }
+                        if (nodeVal !== last + 1) {
+                            setErrorCell(coords);
+                            setTimeout(() => setErrorCell(null), 250);
+                            return;
+                        }
+                    }
+                    const newPath = [...path, coords];
+                    setPath(newPath);
+
+                    const total = currentLevel.size * currentLevel.size;
+                    const visited = newPath.filter(p => currentLevel.nodes[`${p.r},${p.c}`]).length;
+                    const endVal = currentLevel.nodes[`${coords.r},${coords.c}`];
+
+                    if (newPath.length === total && visited === Object.keys(currentLevel.nodes).length && endVal === maxVal) {
+                        setWin(true);
+                        setIsDragging(false);
+                        setTimeout(() => {
+                            if (levelIdx < LEVELS.length - 1) {
+                                setLevelIdx(prev => prev + 1);
+                                setPath([]);
+                                setWin(false);
+                            }
+                        }, 3000);
+                    } else if (endVal === maxVal) {
+                        setShake(true);
+                        setErrorCell(coords);
+                        setTimeout(() => { setShake(false); setErrorCell(null); }, 600);
+                    }
+                }
+            };
+
+            const hardReset = () => {
+                setLevelIdx(0);
+                setPath([]);
+                setWin(false);
+            };
+
+            return (
+                <div className="flex flex-col items-center min-h-screen p-8 font-sans select-none touch-none">
+                    <div className="w-full max-w-[500px] flex flex-col h-[95vh]">
+                        <div className="flex justify-between items-center mb-10 w-full px-2">
+                            <div className="flex items-center gap-6">
+                                <i data-lucide="arrow-left" className="w-10 h-10 cursor-pointer text-gray-700" onClick={() => levelIdx > 0 && setLevelIdx(prev => prev - 1)}></i>
+                                <div className="flex flex-col text-left">
+                                    <div className="flex items-center gap-2 uppercase tracking-tighter">
+                                        <span className="bg-blue-900 text-white px-2 py-1 rounded-lg text-4xl font-black" style={{backgroundColor: 'rgb(0, 65, 130)'}}>ZIP</span>
+                                        <span className="text-5xl font-black text-gray-800">IT!</span>
+                                    </div>
+                                    <span className="text-[10px] text-gray-400 font-bold mt-1 ml-1 tracking-tight uppercase">LINKEDIN GAME PRACTICE</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-4 items-center">
+                                <i data-lucide="refresh-cw" className="w-8 h-8 cursor-pointer text-gray-400 hover:text-gray-600" onClick={hardReset}></i>
+                                <div onClick={() => setIsMusicOn(!isMusicOn)} className="cursor-pointer text-gray-700">
+                                    {isMusicOn ? <i data-lucide="volume-2" className="w-8 h-8"></i> : <i data-lucide="volume-x" className="w-8 h-8"></i>}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end mb-3 pr-2">
+                            <button onClick={() => setPath([])} className="text-gray-500 font-bold bg-gray-200/60 px-6 py-1.5 rounded-full text-sm border border-gray-300">Clear</button>
+                        </div>
+
+                        <div className={`bg-white border-[4px] border-gray-300 rounded-[48px] p-2.5 shadow-md transition-all ${shake ? 'shake-board' : ''}`}>
+                            <div ref={gridRef} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => setIsDragging(false)} className="relative w-full overflow-hidden rounded-[40px]" style={{ aspectRatio: '1/1', display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gridTemplateRows: 'repeat(6, 1fr)' }}>
+                                <canvas ref={canvasRef} className="absolute inset-0 z-10 pointer-events-none" style={{ width: '100%', height: '100%' }} />
+                                {Array.from({ length: 36 }).map((_, i) => {
+                                    const r = Math.floor(i / 6), c = i % 6;
+                                    const val = currentLevel.nodes[`${r},${c}`];
+                                    const isInPath = path.some(p => p.r === r && p.c === c);
+                                    const isError = errorCell?.r === r && errorCell?.c === c;
+                                    const nodeBg = val ? (isInPath ? 'rgb(0, 65, 130)' : 'black') : 'transparent';
+                                    const isMissed = shake && !isInPath;
+
+                                    return (
+                                        <div key={i} className={`relative flex items-center justify-center border-[0.5px] border-gray-200 transition-colors ${isMissed ? 'flash-red' : ''}`}>
+                                            {val && (
+                                                <div className={`w-[76%] h-[76%] rounded-full flex items-center justify-center font-bold text-xl z-20 transition-all text-white ${isError ? 'bg-red-500 scale-110' : ''}`} style={{backgroundColor: nodeBg}}>
+                                                    {val}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="mt-10 px-4 flex flex-col gap-4">
+                            <button disabled={path.length < 2 || win} onClick={() => setPath(prev => prev.slice(0, -1))} className="w-full bg-gray-200 text-gray-500 font-bold py-4 rounded-full text-lg active:bg-gray-300 transition-colors">Undo</button>
+                            <div className="bg-white border border-gray-200 rounded-xl p-5 flex justify-between items-center cursor-pointer">
+                                <span className="text-gray-800 font-bold text-base">How to play</span>
+                                <i data-lucide="chevron-down" className="text-gray-500 w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div className="flex-grow"></div>
+                        <div className="text-center mb-10 font-black text-gray-400 text-sm uppercase tracking-widest">Level {levelIdx + 1} of 30</div>
+                    </div>
+
+                    {win && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-white/40 backdrop-blur-[6px] transition-opacity duration-300 opacity-100">
+                            <div className="bg-white rounded-[40px] p-12 text-center max-sm shadow-2xl border-4 border-[rgb(0,65,130)] animate-zip-pop">
+                                <h2 className="text-7xl font-black text-[rgb(0,65,130)] mb-2 italic uppercase tracking-tighter">ZIPPED!</h2>
+                                <p className="text-gray-600 font-black text-xl leading-snug whitespace-nowrap">{COMP_MESSAGES[levelIdx]}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
         }
 
-        grid.addEventListener('pointerdown', handleDown);
-        window.addEventListener('pointermove', handleMove);
-        window.addEventListener('pointerup', () => isDragging = false);
-        window.addEventListener('resize', resizeCanvas);
-        document.getElementById('clearBtn').addEventListener('click', () => { path = []; drawPath(); });
-        document.getElementById('undoBtn').addEventListener('click', () => { if (path.length > 1 && !win) { path.pop(); drawPath(); } });
-        document.getElementById('backBtn').addEventListener('click', () => { if (levelIdx > 0) { levelIdx--; initLevel(); } });
-        document.getElementById('musicToggle').addEventListener('click', () => {
-            isMusicOn = !isMusicOn;
-            document.getElementById('musicOnIcon').style.display = isMusicOn ? 'block' : 'none';
-            document.getElementById('musicOffIcon').style.display = isMusicOn ? 'none' : 'block';
-            if (isMusicOn) audio.play().catch(() => {}); else audio.pause();
-        });
-        initLevel();
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+        // Initialize Lucide icons
+        setTimeout(() => lucide.createIcons(), 500);
     </script>
 </body>
 </html>
+
