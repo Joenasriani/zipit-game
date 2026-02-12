@@ -8,7 +8,6 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
             background-color: rgb(248, 250, 255);
@@ -90,6 +89,14 @@
             "You didn’t just zip it — you solved it."
         ];
 
+        // --- INLINE SVG COMPONENTS FOR RELIABILITY ---
+        const SpeakerOn = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+        );
+        const SpeakerOff = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        );
+
         function App() {
             const [levelIdx, setLevelIdx] = useState(0);
             const [path, setPath] = useState([]);
@@ -108,18 +115,21 @@
             const maxVal = useMemo(() => Math.max(...Object.values(currentLevel.nodes)), [currentLevel]);
 
             useEffect(() => {
-                lucide.createIcons();
-            }, [win, isMusicOn]);
-
-            useEffect(() => {
                 if (!audioRef.current) {
-                    audioRef.current = new Audio('/music/zipit.mp3');
+                    audioRef.current = new Audio('music/zipit.mp3');
                     audioRef.current.loop = true;
                 }
-                if (isMusicOn) {
-                    audioRef.current.play().catch(e => console.log("Audio play failed:", e));
-                } else {
-                    audioRef.current.pause();
+            }, []);
+
+            useEffect(() => {
+                if (audioRef.current) {
+                    if (isMusicOn) {
+                        audioRef.current.play().catch(() => {
+                            console.log("Waiting for user gesture to play audio.");
+                        });
+                    } else {
+                        audioRef.current.pause();
+                    }
                 }
             }, [isMusicOn]);
 
@@ -273,9 +283,9 @@
                             <button onClick={() => setPath([])} className="text-gray-500 font-bold bg-gray-200/60 px-4 py-1.5 rounded-full text-xs border border-gray-300 active:bg-gray-300">Clear</button>
                             <div 
                                 onClick={toggleMusic} 
-                                className={`cursor-pointer transition-colors p-2 ${isAnimatingIcon ? 'animate-icon-click' : ''} ${isMusicOn ? 'text-[rgb(0,65,130)]' : 'text-gray-400'}`}
+                                className={`cursor-pointer transition-colors p-1 ${isAnimatingIcon ? 'animate-icon-click' : ''} ${isMusicOn ? 'text-[rgb(0,65,130)]' : 'text-gray-400'}`}
                             >
-                                {isMusicOn ? <i data-lucide="volume-2" className="w-8 h-8"></i> : <i data-lucide="volume-x" className="w-8 h-8"></i>}
+                                {isMusicOn ? <SpeakerOn /> : <SpeakerOff />}
                             </div>
                         </div>
                     </div>
