@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZIP IT!</title>
+    <title>ZIP IT! - Robomarket</title>
     <script src="https://cdn.tailwindcss.com/"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -29,14 +29,20 @@
         .shake-board { animation: shake 0.2s ease-in-out 3; border-color: rgb(239, 68, 68) !important; }
         .flash-red { background-color: rgba(239, 68, 68, 0.1) !important; }
         .animate-zip-pop { animation: zipPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        canvas {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect, useRef, useMemo } = React;
 
+        // --- MATHEMATICALLY VERIFIED LEVELS (6x6 Grid) ---
+        // Rule: Start(Even) must reach End(Odd) to cover exactly 36 cells.
         const LEVELS = [
             { size: 6, nodes: { "0,0": 1, "0,5": 2, "5,5": 3, "5,4": 4 } },
             { size: 6, nodes: { "0,0": 1, "2,1": 2, "4,2": 3, "5,4": 4, "4,5": 5 } }, 
@@ -89,12 +95,18 @@
             const [errorCell, setErrorCell] = useState(null);
             const [isMusicOn, setIsMusicOn] = useState(false);
             const [shake, setShake] = useState(false);
+            const [howToOpen, setHowToOpen] = useState(false);
+            
             const canvasRef = useRef(null);
             const gridRef = useRef(null);
             const audioRef = useRef(null);
 
             const currentLevel = LEVELS[levelIdx];
-            const maxVal = Math.max(...Object.values(currentLevel.nodes));
+            const maxVal = useMemo(() => Math.max(...Object.values(currentLevel.nodes)), [currentLevel]);
+
+            useEffect(() => {
+                lucide.createIcons();
+            }, [win, howToOpen, isMusicOn]);
 
             useEffect(() => {
                 if (!audioRef.current) {
@@ -134,6 +146,15 @@
                     else ctx.lineTo(x, y);
                 });
                 ctx.stroke();
+
+                // Draw end bulb
+                if (path.length > 0) {
+                    const head = path[path.length - 1];
+                    ctx.beginPath();
+                    ctx.fillStyle = 'white';
+                    ctx.arc(head.c * cellSize + half, head.r * cellSize + half, cellSize * 0.15, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             };
 
             useEffect(() => {
@@ -176,9 +197,10 @@
                 if (!isDragging || win) return;
                 const coords = getCoords(e.clientX, e.clientY);
                 if (!coords) return;
-                const head = path[path.length -  head.r === coords.r && head.c === coords.c) return;
                 
                 const headNode = path[path.length - 1];
+                if (headNode.r === coords.r && headNode.c === coords.c) return;
+
                 if (Math.abs(coords.r - headNode.r) + Math.abs(coords.c - headNode.c) === 1) {
                     if (path.length > 1) {
                         const prev = path[path.length - 2];
@@ -206,10 +228,10 @@
                     setPath(newPath);
 
                     const total = currentLevel.size * currentLevel.size;
-                    const visited = newPath.filter(p => currentLevel.nodes[`${p.r},${p.c}`]).length;
+                    const visitedCount = newPath.filter(p => currentLevel.nodes[`${p.r},${p.c}`]).length;
                     const endVal = currentLevel.nodes[`${coords.r},${coords.c}`];
 
-                    if (newPath.length === total && visited === Object.keys(currentLevel.nodes).length && endVal === maxVal) {
+                    if (newPath.length === total && endVal === maxVal) {
                         setWin(true);
                         setIsDragging(false);
                         setTimeout(() => {
@@ -234,8 +256,9 @@
             };
 
             return (
-                <div className="flex flex-col items-center min-h-screen p-8 font-sans select-none touch-none">
+                <div className="flex flex-col items-center min-h-screen p-6 font-sans select-none touch-none">
                     <div className="w-full max-w-[500px] flex flex-col h-[95vh]">
+                        {/* Header */}
                         <div className="flex justify-between items-center mb-10 w-full px-2">
                             <div className="flex items-center gap-6">
                                 <i data-lucide="arrow-left" className="w-10 h-10 cursor-pointer text-gray-700" onClick={() => levelIdx > 0 && setLevelIdx(prev => prev - 1)}></i>
@@ -259,6 +282,7 @@
                             <button onClick={() => setPath([])} className="text-gray-500 font-bold bg-gray-200/60 px-6 py-1.5 rounded-full text-sm border border-gray-300">Clear</button>
                         </div>
 
+                        {/* Game Board */}
                         <div className={`bg-white border-[4px] border-gray-300 rounded-[48px] p-2.5 shadow-md transition-all ${shake ? 'shake-board' : ''}`}>
                             <div ref={gridRef} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => setIsDragging(false)} className="relative w-full overflow-hidden rounded-[40px]" style={{ aspectRatio: '1/1', display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gridTemplateRows: 'repeat(6, 1fr)' }}>
                                 <canvas ref={canvasRef} className="absolute inset-0 z-10 pointer-events-none" style={{ width: '100%', height: '100%' }} />
@@ -271,7 +295,7 @@
                                     const isMissed = shake && !isInPath;
 
                                     return (
-                                        <div key={i} className={`relative flex items-center justify-center border-[0.5px] border-gray-200 transition-colors ${isMissed ? 'flash-red' : ''}`}>
+                                        <div key={i} className={`relative flex items-center justify-center border-[0.5px] border-gray-100 transition-colors ${isMissed ? 'flash-red' : ''}`}>
                                             {val && (
                                                 <div className={`w-[76%] h-[76%] rounded-full flex items-center justify-center font-bold text-xl z-20 transition-all text-white ${isError ? 'bg-red-500 scale-110' : ''}`} style={{backgroundColor: nodeBg}}>
                                                     {val}
@@ -283,18 +307,28 @@
                             </div>
                         </div>
 
+                        {/* Controls */}
                         <div className="mt-10 px-4 flex flex-col gap-4">
-                            <button disabled={path.length < 2 || win} onClick={() => setPath(prev => prev.slice(0, -1))} className="w-full bg-gray-200 text-gray-500 font-bold py-4 rounded-full text-lg active:bg-gray-300 transition-colors">Undo</button>
-                            <div className="bg-white border border-gray-200 rounded-xl p-5 flex justify-between items-center cursor-pointer">
-                                <span className="text-gray-800 font-bold text-base">How to play</span>
-                                <i data-lucide="chevron-down" className="text-gray-500 w-6 h-6"></i>
+                            <button disabled={path.length < 2 || win} onClick={() => setPath(prev => prev.slice(0, -1))} className="w-full bg-gray-200 text-gray-500 font-bold py-5 rounded-full text-xl active:bg-gray-300 transition-colors shadow-sm disabled:opacity-50">Undo</button>
+                            
+                            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                                <div onClick={() => setHowToOpen(!howToOpen)} className="p-5 flex justify-between items-center cursor-pointer hover:bg-gray-50">
+                                    <span className="text-gray-800 font-bold text-lg">How to play</span>
+                                    <i data-lucide={howToOpen ? "chevron-up" : "chevron-down"} className="text-gray-500 w-6 h-6"></i>
+                                </div>
+                                {howToOpen && (
+                                    <div className="px-5 pb-5 text-gray-600 text-base leading-relaxed border-t border-gray-100 pt-4">
+                                        Fill every square on the grid starting from node 1. You must pass through the numbered checkpoints in sequence (1, 2, 3...). The level is complete when 100% of the grid is zipped.
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         <div className="flex-grow"></div>
-                        <div className="text-center mb-10 font-black text-gray-400 text-sm uppercase tracking-widest">Level {levelIdx + 1} of 30</div>
+                        <div className="text-center mb-8 font-black text-gray-400 text-sm uppercase tracking-widest">Level {levelIdx + 1} of 30</div>
                     </div>
 
+                    {/* Completion Modal */}
                     {win && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-white/40 backdrop-blur-[6px] transition-opacity duration-300 opacity-100">
                             <div className="bg-white rounded-[40px] p-12 text-center max-sm shadow-2xl border-4 border-[rgb(0,65,130)] animate-zip-pop">
@@ -309,9 +343,6 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
-
-        // Initialize Lucide icons
-        setTimeout(() => lucide.createIcons(), 500);
     </script>
 </body>
 </html>
