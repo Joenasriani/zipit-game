@@ -249,27 +249,18 @@
                 }
             };
 
-            const hardReset = () => {
-                setLevelIdx(0);
-                setPath([]);
-                setWin(false);
-            };
-
             return (
                 <div className="flex flex-col items-center h-screen w-full max-w-[500px] mx-auto p-4 select-none touch-none">
                     <div className="flex justify-between items-center w-full px-2 h-16 shrink-0">
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => setPath([])} className="text-gray-500 font-bold bg-gray-200/60 px-4 py-1.5 rounded-full text-xs border border-gray-300 active:bg-gray-300">Clear</button>
-                            <div className="flex flex-col text-left">
-                                <div className="flex items-center gap-1.5 uppercase tracking-tighter">
-                                    <span className="bg-blue-900 text-white px-1.5 py-0.5 rounded-md text-2xl font-black" style={{backgroundColor: 'rgb(0, 65, 130)'}}>ZIP</span>
-                                    <span className="text-3xl font-black text-gray-800">IT!</span>
-                                </div>
-                                <span className="text-[9px] text-gray-400 font-bold tracking-tight uppercase">LINKEDIN GAME PRACTICE</span>
+                        <div className="flex flex-col text-left">
+                            <div className="flex items-center gap-1.5 uppercase tracking-tighter">
+                                <span className="bg-blue-900 text-white px-1.5 py-0.5 rounded-md text-2xl font-black" style={{backgroundColor: 'rgb(0, 65, 130)'}}>ZIP</span>
+                                <span className="text-3xl font-black text-gray-800">IT!</span>
                             </div>
+                            <span className="text-[9px] text-gray-400 font-bold tracking-tight uppercase">LINKEDIN GAME PRACTICE</span>
                         </div>
                         <div className="flex gap-4 items-center">
-                            <i data-lucide="refresh-cw" className="w-6 h-6 cursor-pointer text-gray-400 hover:text-gray-600" onClick={hardReset}></i>
+                            <button onClick={() => setPath([])} className="text-gray-500 font-bold bg-gray-200/60 px-4 py-1.5 rounded-full text-xs border border-gray-300 active:bg-gray-300">Clear</button>
                             <div onClick={() => setIsMusicOn(!isMusicOn)} className={`cursor-pointer transition-colors ${isMusicOn ? 'text-[rgb(0,65,130)]' : 'text-gray-700'}`}>
                                 {isMusicOn ? <i data-lucide="volume-2" className="w-7 h-7"></i> : <i data-lucide="volume-x" className="w-7 h-7"></i>}
                             </div>
