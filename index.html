@@ -28,13 +28,13 @@
         }
         @keyframes iconPop {
             0% { transform: scale(1); }
-            50% { transform: scale(1.4); }
+            50% { transform: scale(1.35); }
             100% { transform: scale(1); }
         }
         .shake-board { animation: shake 0.2s ease-in-out 3; border-color: rgb(239, 68, 68) !important; }
         .flash-red { background-color: rgba(239, 68, 68, 0.1) !important; }
         .animate-zip-pop { animation: zipPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .animate-icon-click { animation: iconPop 0.3s ease-out; }
+        .animate-icon-click { animation: iconPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         canvas {
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
@@ -51,8 +51,8 @@
         .game-board-wrapper {
             width: 90vmin;
             height: 90vmin;
-            max-width: 600px;
-            max-height: 600px;
+            max-width: 580px;
+            max-height: 580px;
         }
     </style>
 </head>
@@ -63,13 +63,16 @@
         const { useState, useEffect, useRef, useMemo } = React;
 
         const LEVELS = [
-            { size: 6, nodes: { "0,0": 1, "0,5": 2, "5,5": 3, "5,4": 4 } },
+            { size: 6, nodes: { "0,0": 1, "5,0": 2, "5,5": 3, "5,4": 4 } },
             { size: 6, nodes: { "0,0": 1, "5,0": 2, "5,5": 3, "4,5": 4, "0,5": 5 } },
             { size: 6, nodes: { "1,1": 1, "4,1": 2, "4,4": 3, "1,4": 4, "0,5": 5 } },
+            { size: 6, nodes: { "0,0": 1, "5,5": 2, "3,5": 3, "0,5": 4 } }, // Fixed L4: Moved 3 from (5,0) to (3,5)
+            { size: 6, nodes: { "1,1": 1, "1,4": 2, "4,4": 3, "4,1": 4, "0,1": 5 } },
             { size: 6, nodes: { "0,0": 1, "2,2": 2, "4,4": 3, "5,5": 4, "5,4": 5 } },
+            { size: 6, nodes: { "1,1": 1, "1,4": 2, "4,4": 3, "4,1": 4, "2,2": 5, "2,3": 6, "3,3": 7, "3,2": 8, "0,1": 9 } },
             { size: 6, nodes: { "3,3": 1, "0,0": 2, "0,5": 3, "5,4": 4 } },
-            { size: 6, nodes: { "0,0": 1, "5,0": 4, "5,5": 3, "0,5": 2, "2,2": 5, "2,3": 6, "1,4": 7 } },
-            { size: 6, nodes: { "1,1": 1, "2,2": 2, "3,3": 3, "4,4": 4, "1,4": 5, "4,1": 6, "0,0": 7 } },
+            { size: 6, nodes: { "0,0": 1, "5,5": 2, "5,0": 3, "0,5": 4, "2,2": 5, "3,2": 6, "5,2": 7 } },
+            { size: 6, nodes: { "1,1": 1, "2,2": 2, "3,3": 3, "4,4": 4, "1,4": 5, "4,1": 6, "0,1": 7 } },
             { size: 6, nodes: { "0,0": 1, "0,1": 2, "0,2": 3, "0,3": 4, "0,4": 5, "0,5": 6, "5,5": 7, "5,4": 8, "4,5": 9 } },
             { size: 6, nodes: { "1,1": 1, "1,2": 2, "2,2": 3, "2,1": 4, "3,1": 5, "3,2": 6, "4,2": 7, "4,1": 8, "5,0": 9, "5,1": 10, "5,2": 11 } },
             { size: 6, nodes: { "0,0": 1, "5,0": 2, "5,5": 3, "0,5": 4, "3,3": 5, "2,2": 6, "1,1": 7, "4,3": 8, "5,4": 9 } },
@@ -79,20 +82,15 @@
             { size: 6, nodes: { "0,0": 1, "1,1": 3, "0,1": 2, "1,0": 4, "2,0": 5, "2,1": 6, "3,1": 7, "3,0": 8, "5,0": 9, "5,5": 10, "0,3": 11, "5,4": 12 } },
             { size: 6, nodes: { "0,0": 1, "2,0": 2, "2,2": 3, "0,2": 4, "0,4": 5, "2,4": 6, "4,4": 7, "4,2": 8, "4,0": 9, "5,5": 10, "3,2": 11, "5,4": 12 } },
             { size: 6, nodes: { "0,0": 1, "0,1": 2, "1,1": 3, "1,0": 4, "2,0": 5, "2,1": 6, "3,1": 7, "3,0": 8, "4,0": 9, "4,1": 10, "5,1": 11, "5,0": 12, "5,3": 13, "0,5": 14 } },
-            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "1,3": 7, "0,3": 8, "0,4": 9, "1,4": 10, "1,5": 11, "0,5": 12, "5,5": 13, "5,4": 14, "4,5": 15 } },
-            { size: 6, nodes: { "3,3": 1, "2,2": 2, "1,1": 3, "0,0": 4, "0,5": 5, "5,5": 6, "5,0": 7, "4,1": 8, "3,2": 9, "2,3": 10, "1,4": 11, "2,5": 12, "4,3": 13, "5,4": 14 } },
-            { size: 6, nodes: { "0,0": 1, "2,0": 2, "4,0": 3, "5,1": 4, "5,3": 5, "5,5": 6, "3,5": 7, "1,5": 8, "0,4": 9, "0,2": 10, "2,2": 11, "2,4": 12, "3,3": 13, "4,3": 14, "5,4": 15 } },
-            { size: 6, nodes: { "0,0": 1, "0,2": 2, "0,4": 3, "2,4": 4, "4,4": 5, "4,2": 6, "4,0": 7, "2,0": 8, "2,2": 9, "1,1": 10, "1,3": 11, "3,3": 12, "3,1": 13, "5,5": 14, "5,0": 15, "5,1": 16 } },
-            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "2,2": 7, "2,1": 8, "2,0": 9, "3,0": 10, "3,1": 11, "3,2": 12, "4,2": 13, "4,1": 14, "4,0": 15, "5,0": 16, "5,4": 17 } }
+            { size: 6, nodes: { "0,0": 1, "1,0": 2, "1,1": 3, "0,1": 4, "0,2": 5, "1,2": 6, "1,3": 7, "0,3": 8, "0,4": 9, "1,4": 10, "1,5": 11, "0,5": 12, "5,5": 13, "5,4": 14, "4,5": 15 } }
         ];
 
         const COMP_MESSAGES = [
-            "So you know how to zip it.", "Ok! that was easy anyway!", 
-            "Clean! Nice.", "Nice again.", "So you think you're better than me?!", 
-            "Okay, that was clean too.", "You’re getting it.", "Not bad. Not bad at all.", "Nice. Don’t get comfortable.", "You’re warming up. Joe noticed.",
+            "So you know how to zip it.", Ok! Nice one.", 
+            "Clean start.", "Nice.", "Ok! Nice too.", 
+            "Okay, that was clean.", "You’re getting it.", "Not bad at all.", "Nice. Don’t get comfortable.", "You’re warming up. Joe noticed.",
             "That wasn’t accidental.", "You’re thinking ahead now.", "Most people mess this up.", "Feeling confident yet?", "That path had intent.",
-            "Okay… that was smart.", "You saw the trap.", "Logic over luck. Good choice.", "You’re not guessing anymore.", "That filtered the amateurs.",
-            "Alright. That was elite."
+            "Okay… that was smart.", "You saw the trap.", "Logic over luck. Good choice.", "You’re not guessing anymore.", "That filtered the amateurs."
         ];
 
         const SpeakerOn = () => (
@@ -124,11 +122,8 @@
                     audioRef.current = new Audio('music/zipit.mp3');
                     audioRef.current.loop = true;
                 }
-                if (isMusicOn) {
-                    audioRef.current.play().catch(() => {});
-                } else {
-                    audioRef.current.pause();
-                }
+                if (isMusicOn) audioRef.current.play().catch(() => {});
+                else audioRef.current.pause();
             }, [isMusicOn]);
 
             const toggleMusic = () => {
@@ -272,16 +267,16 @@
                     <div className="w-full max-w-[800px] flex justify-between items-center px-6 shrink-0 h-20">
                         <div className="flex flex-col text-left">
                             <div className="flex items-center gap-1.5 uppercase tracking-tighter">
-                                <span className="bg-blue-900 text-white px-2 py-1 rounded-md text-3xl font-black" style={{backgroundColor: 'rgb(0, 65, 130)'}}>ZIP</span>
+                                <span className="bg-blue-900 text-white px-2.5 py-1 rounded-md text-3xl font-black" style={{backgroundColor: 'rgb(0, 65, 130)'}}>ZIP</span>
                                 <span className="text-4xl font-black text-gray-800">IT!</span>
                             </div>
-                            <span className="text-[10px] text-gray-400 font-bold tracking-tight uppercase">LINKEDIN GAME PRACTICE</span>
+                            <span className="text-[10px] text-gray-400 font-bold tracking-tight uppercase text-left">LINKEDIN GAME PRACTICE</span>
                         </div>
-                        <div className="flex gap-4 items-center">
+                        <div className="flex gap-5 items-center">
                             <button onClick={() => setPath([])} className="text-gray-500 font-bold bg-gray-200/60 px-6 py-2 rounded-full text-sm border border-gray-300 active:bg-gray-300">Clear</button>
                             <div 
                                 onClick={toggleMusic} 
-                                className={`cursor-pointer transition-colors p-1 ${isAnimatingIcon ? 'animate-icon-click' : ''}`}
+                                className={`cursor-pointer transition-transform ${isAnimatingIcon ? 'animate-icon-click' : ''}`}
                             >
                                 {isMusicOn ? <SpeakerOn /> : <SpeakerOff />}
                             </div>
@@ -316,13 +311,16 @@
 
                     <div className="w-full max-w-[600px] px-6 shrink-0 flex flex-col justify-center gap-4">
                         <button disabled={path.length < 2 || win} onClick={() => setPath(prev => prev.slice(0, -1))} className="w-full bg-gray-200 text-gray-500 font-bold py-5 rounded-full text-xl active:bg-gray-300 transition-colors shadow-sm disabled:opacity-50">Undo</button>
-                        <div className="text-center font-black text-gray-400 text-xs uppercase tracking-widest">Level {levelIdx + 1} of 21</div>
+                    </div>
+
+                    <div className="flex-grow flex items-end pb-6">
+                        <div className="text-center font-black text-gray-400 text-xs uppercase tracking-widest">Level {levelIdx + 1} of 20</div>
                     </div>
 
                     {win && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-white/40 backdrop-blur-[6px] transition-opacity duration-300 opacity-100">
                             <div className="bg-white rounded-[40px] p-10 text-center max-sm shadow-2xl border-4 border-[rgb(0,65,130)] animate-zip-pop">
-                                <h2 className="text-6xl font-black text-[rgb(0,65,130)] mb-2 italic uppercase tracking-tighter">ZIPPED!</h2>
+                                <h2 className="text-6xl font-black text-[rgb(0,65,130)] mb-2 italic uppercase tracking-tighter text-left ml-4">ZIPPED!</h2>
                                 <p className="text-gray-600 font-black text-lg leading-snug">{COMP_MESSAGES[levelIdx]}</p>
                             </div>
                         </div>
