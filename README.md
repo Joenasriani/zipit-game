@@ -1,20 +1,32 @@
 # ZIP IT!
 
-**Historical label:** LinkedIn Game Practice  
-**Status:** original browser grid path puzzle  
-**Creator:** Joe Nasr  
-**Creator identity:** https://joe-nasr-signals.vercel.app/v2/
+ZIP IT! is a browser logic puzzle about drawing one valid path across a grid while covering every cell and visiting numbered checkpoints in order.
 
-ZIP IT! is a browser logic puzzle about drawing a single valid path across a grid while covering every cell and visiting numbered checkpoints in order.
+**Play:** https://joenasr.itch.io/zip-it
 
-## Gameplay
+## Core mechanic
 
-Start at the first numbered node, trace through the grid, pass checkpoints in sequence and finish only after the board is fully covered.
+Start at the first numbered node, trace through the grid, pass every checkpoint in sequence, cover the full board, and finish on the final node.
 
-The project includes multiple level layouts, touch and pointer input, completion feedback and score or speed feedback.
+The game includes multiple level layouts, touch and pointer input, completion feedback, missed-cell feedback, score and speed responses, and progressively tighter path-planning challenges.
 
-## Independence
+## Classification
 
-ZIP IT! is an independent game project. Its earlier **LinkedIn Game Practice** label describes the development inspiration; it is not affiliated with or endorsed by LinkedIn.
+- Puzzle
+- Grid path puzzle
+- Browser game
+- HTML5 game
+- Touch and pointer controls
 
-Existing branches and historical builds are retained as development history.
+## Status
+
+Released browser game.
+
+An earlier development label referenced a professional-networking game style. ZIP IT! is an independent game and is not affiliated with or endorsed by LinkedIn.
+
+## Creator
+
+Created by Joe Nasr.
+
+Creator profile: https://joe-nasr-signals.vercel.app/v2/
+Games catalog: https://joe-nasr-signals.vercel.app/v2/games.html
