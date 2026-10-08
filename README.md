@@ -1,5 +1,5 @@
 ZIP IT! - LINKEDIN GAME PRACTICE
-DEVELOPED BY JOE NASR (ROBOMARKET)
+DEVELOPED BY JOE NASR
 
 OVERVIEW
 ZIP IT! is a premium, high-performance logic puzzle designed to help users master the grid-coverage mechanics found in popular professional networking games. Engineered with mathematical precision, the game challenges players to find Hamiltonian paths across various 6x6 grid configurations.
